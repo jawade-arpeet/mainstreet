@@ -11,6 +11,8 @@ import (
 func New(mw *middleware.Middleware, hdlr *handler.Handler) *echo.Echo {
 	e := echo.New()
 
+	e.Use(mw.Request.HandleHTTPErr)
+
 	apiGrp := e.Group("/api")
 
 	v1.MountV1Router(apiGrp, hdlr)

@@ -2,8 +2,12 @@ package middleware
 
 import "mainstreet/internal/repository"
 
-type Middleware struct{}
+type Middleware struct {
+	Request *RequestMiddleware
+}
 
 func New(repo *repository.Repository) *Middleware {
-	return &Middleware{}
+	return &Middleware{
+		Request: newRequestMiddleware(),
+	}
 }
