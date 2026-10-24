@@ -78,24 +78,39 @@ func (c *PostgresClient) wrapErr(err error) error {
 	return fmt.Errorf("%w: %w", sentinel, err)
 }
 
+func (c *PostgresClient) Exec(
+	ctx context.Context,
+	query string,
+	args pgx.NamedArgs,
+) (int64, error) {
+	tag, err := c.pool.Exec(ctx, query, args)
+	if err != nil {
+		return 0, c.wrapErr(err)
+	}
+
+	return tag.RowsAffected(), nil
+}
+
 func (c *PostgresClient) QueryOne[T any](
 	ctx context.Context,
 	query string,
 	args pgx.NamedArgs,
-) (*T, error) {
-	row, err := c.pool.Query(ctx, query, args)
+) (T, error) {
+	var zero T
+
+	rows, err := c.pool.Query(ctx, query, args)
 	if err != nil {
-		return nil, c.wrapErr(err)
+		return zero, c.wrapErr(err)
 	}
 
-	defer row.Close()
+	defer rows.Close()
 
 	var result T
-	if err := pgxscan.ScanOne(&result, row); err != nil {
-		return nil, c.wrapErr(err)
+	if err := pgxscan.ScanOne(&result, rows); err != nil {
+		return zero, c.wrapErr(err)
 	}
 
-	return &result, nil
+	return result, nil
 }
 
 func (c *PostgresClient) QueryAll[T any](
